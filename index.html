@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JumpBot AI & Платформа Вайб-Кодинга Премиум</title>
+    <!-- Шрифты с футуристичным характером -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --accent: #00E5FF;
+            --accent-rgb: 0, 229, 255;
+            --bg: #03050a;
+            --text: #FFFFFF;
+            --text-muted: #9CA3AF;
+            --glow: 0 0 30px rgba(0, 229, 255, 0.4);
+            --angle: 0deg;
+        }
+
+        /* Вайб Розового Синтвейва */
+        .vibe-pink {
+            --accent: #FF007F;
+            --accent-rgb: 255, 0, 127;
+            --glow: 0 0 30px rgba(255, 0, 127, 0.4);
+        }
+
+        /* Вайб Кибер-Зеленого */
+        .vibe-green {
+            --accent: #00FF66;
+            --accent-rgb: 0, 255, 102;
+            --glow: 0 0 30px rgba(0, 255, 102, 0.4);
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            transition: background-color 0.5s ease;
+        }
+
+        /* HTML5 Canvas на весь задний план */
+        #neural-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            opacity: 0.35;
+        }
+
+        /* Фонарик-glow, следующий за курсором */
+        #vibe-cursor-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(var(--accent-rgb), 0.12) 0%, rgba(0,0,0,0) 70%);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 2;
+            transition: background 0.5s ease;
+        }
+
+        /* Градиентный переливающийся текст */
+        .text-gradient {
+            background: linear-gradient(135deg, #ffffff 30%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            transition: all 0.5s ease;
+        }
+
+        /* Ультра-премиальные Glassmorphism Карточки с градиентной рамкой */
+        .premium-card {
+            position: relative;
+            background: rgba(255, 255, 255, 0.015);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.4s ease;
+            z-index: 5;
+        }
+
+        /* Псевдо-рамка с градиентом */
+        .premium-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 24px;
+            padding: 1.5px; /* Толщина рамки */
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(var(--accent-rgb), 0.2) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            transition: background 0.5s ease;
+        }
+
+        .premium-card:hover {
+            box-shadow: 0 20px 40px rgba(var(--accent-rgb), 0.15);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .premium-card:hover::before {
+            background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.8) 0%, rgba(139, 92, 246, 0.8) 100%);
+        }
+
+        /* Бегущий неоновый контур (Rotating Laser Glow) */
+        .laser-glow-card {
+            position: relative;
+            background: rgba(3, 5, 10, 0.85);
+            border-radius: 24px;
+            z-index: 5;
+        }
+
+        @property --angle {
+            syntax: '<angle>';
+            initial-value: 0deg;
+            inherits: false;
+        }
+
+        .laser-glow-card::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 26px;
+            background: conic-gradient(from var(--angle), transparent 50%, var(--accent), transparent 100%);
+            z-index: -1;
+            animation: spin-laser 3s linear infinite;
+        }
+
+        @keyframes spin-laser {
+            0% { --angle: 0deg; }
+            100% { --angle: 360deg; }
+        }
+
+        /* Кнопка свитчера */
+        .vibe-switch-btn {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .vibe-switch-btn.active {
+            border-color: #ffffff;
+            transform: scale(1.2);
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        /* Магнитный контейнер для кнопок */
+        .magnetic-wrap {
+            display: inline-block;
+            transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* Кнопки с жидким неоновым сиянием */
+        .liquid-btn {
+            position: relative;
+            background: linear-gradient(135deg, var(--accent) 0%, #7C3AED 100%);
+            color: #03050a;
+            font-weight: 800;
+            overflow: hidden;
+            z-index: 5;
+            transition: transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: var(--glow);
+        }
+
+        .liquid-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: 0.5s;
+        }
+
+        .liquid-btn:hover::before {
+            left: 100%;
+        }
+
+        .liquid-btn:hover {
+            box-shadow: 0 0 40px rgba(var(--accent-rgb), 0.6);
+        }
+
+        /* Кастомный терминал */
+        .terminal-glow {
+            background: rgba(3, 5, 10, 0.85);
+            border: 1px solid rgba(var(--accent-rgb), 0.2);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8), inset 0 0 20px rgba(var(--accent-rgb), 0.05);
+        }
+
+        /* Стилизация тегов конструктора */
+        .interactive-tag {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .interactive-tag:hover {
+            border-color: var(--accent);
+            background: rgba(var(--accent-rgb), 0.05);
+            transform: translateY(-2px);
+        }
+
+        .interactive-tag.active {
+            background: rgba(var(--accent-rgb), 0.15);
+            border-color: var(--accent);
+            color: #fff;
+            box-shadow: 0 0 25px rgba(var(--accent-rgb), 0.3);
+            text-shadow: 0 0 8px var(--accent);
+        }
+
+        /* Премиальная модалка */
+        .modal-blur {
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            background: rgba(2, 4, 8, 0.9);
+            transition: opacity 0.4s ease;
+        }
+
+        /* Анимация пульсации ноды онлайн */
+        .status-pulse {
+            position: relative;
+        }
+        .status-pulse::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 1px solid var(--accent);
+            animation: pulse-ring 2s infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2.2); opacity: 0; }
+        }
+
+        /* Плавное покачивание 3D графики */
+        .hologram-float {
+            animation: float-slow 6s ease-in-out infinite;
+        }
+
+        @keyframes float-slow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(2deg); }
+        }
+
+        /* Дополнительное анимированное свечение для элементов */
+        .neon-glow-filter {
+            filter: drop-shadow(0px 0px 12px var(--accent));
+        }
+
+        /* Стилизация контейнера 3D-сферы из цифр */
+        .sphere-container {
+            position: relative;
+            width: 100%;
+            max-width: 440px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #sphere-canvas {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            cursor: grab;
+        }
+
+        #sphere-canvas:active {
+            cursor: grabbing;
+        }
+
+        /* Кастомный визуализатор промптов */
+        #live-prompt-visualizer {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(var(--accent-rgb), 0.1);
+            box-shadow: inset 0 0 15px rgba(var(--accent-rgb), 0.02);
+            min-height: 80px;
+        }
+
+        /* Премиальная сетка для Hero секции (Mobile-First) */
+        .hero-layout-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem; /* Компактный зазор на мобильных для предотвращения прокрутки */
+        }
+
+        /* Десктопная сетка на Grid Areas, гарантирующая идеальный порядок колонок */
+        @media(min-width: 1024px) {
+            .hero-layout-grid {
+                display: grid;
+                grid-template-areas: 
+                    "badge sphere"
+                    "text sphere";
+                grid-template-columns: 1.1fr 0.9fr;
+                grid-template-rows: auto 1fr;
+                gap: 2.5rem;
+            }
+            .grid-area-badge {
+                grid-area: badge;
+                align-self: end;
+            }
+            .grid-area-sphere {
+                grid-area: sphere;
+                align-self: center;
+            }
+            .grid-area-text {
+                grid-area: text;
+                align-self: start;
+            }
+        }
+    </style>
+</head>
+<body class="relative min-h-screen text-white">
+
+    <!-- Интерактивная живая нейросеть (Canvas) -->
+    <canvas id="neural-canvas"></canvas>
+
+    <!-- Мягкий следящий свет -->
+    <div id="vibe-cursor-glow"></div>
+
+    <!-- Основной контейнер сайта -->
+    <div class="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-2 sm:py-8 flex flex-col gap-12 lg:gap-32">
+
+        <!-- НАВИГАЦИЯ (Интегрированная шапка без наложений) -->
+        <header class="flex justify-between items-center py-3 border-b border-white/5 gap-2">
+            
+            <!-- Левая часть: Компактный переключатель вайбов и звука -->
+            <div class="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full z-[100]">
+                <button id="sound-toggle-btn" class="text-gray-400 hover:text-white transition-colors flex items-center font-mono text-[10px] font-bold">
+                    <span id="sound-icon">🔈</span>
+                </button>
+                <span class="w-[1px] h-3 bg-white/10"></span>
+                <div class="flex items-center gap-1.5">
+                    <button class="vibe-switch-btn active" data-vibe="vibe-cyan" style="background-color: #00E5FF;"></button>
+                    <button class="vibe-switch-btn" data-vibe="vibe-pink" style="background-color: #FF007F;"></button>
+                    <button class="vibe-switch-btn" data-vibe="vibe-green" style="background-color: #00FF66;"></button>
+                </div>
+            </div>
+            
+            <!-- Центральная часть: Логотип -->
+            <div class="flex items-center justify-center">
+                <span class="text-lg sm:text-2xl font-black tracking-tighter text-white font-mono whitespace-nowrap">
+                    Jump<span class="text-gradient">Bot</span>
+                </span>
+            </div>
+
+            <!-- Правая часть: Кнопка действия -->
+            <div class="magnetic-wrap">
+                <a href="#constructor" class="liquid-btn block px-4 sm:px-5 py-2 rounded-full text-[10px] sm:text-xs font-bold tracking-widest text-black whitespace-nowrap">
+                    Связаться
+                </a>
+            </div>
+
+        </header>
+
+        <!-- ЭКРАН 1: ГЛАВНЫЙ ЭКРАН (Сверхкомпактная сетка) -->
+        <section id="hero" class="relative py-2 lg:py-8">
+            <div class="hero-layout-grid">
+                
+                <!-- 1. СТАТУС-БАР: Первым на мобильном -->
+                <div class="grid-area-badge flex justify-center lg:justify-start w-full order-1">
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+                        <span class="status-pulse w-1.5 h-1.5 rounded-full bg-[var(--accent)] shadow-[0_0_10px_var(--accent)]"></span>
+                        <span class="text-[9px] font-bold tracking-widest text-gray-300 uppercase font-mono">ИИ-Ядро v2.5</span>
+                        <span class="text-gray-600">|</span>
+                        <span class="text-[9px] text-gray-400 font-mono font-bold">Синтезов: <strong id="vibe-counter" class="text-white font-mono">14820</strong></span>
+                    </div>
+                </div>
+
+                <!-- 2. ИНТЕРАКТИВНЫЙ ЦИФРОВОЙ ШАР: Вторым на мобильном, уменьшена высота до 210px -->
+                <div class="grid-area-sphere w-full flex justify-center items-center h-[210px] sm:h-[320px] lg:h-[450px] order-2">
+                    <div class="sphere-container">
+                        <canvas id="sphere-canvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- 3. ТЕКСТОВЫЙ БЛОК И КНОПКИ: Третьим на мобильном -->
+                <div class="grid-area-text flex flex-col items-center lg:items-start text-center lg:text-left w-full order-3 mt-1 lg:mt-0">
+                    <!-- Заголовок -->
+                    <h1 class="text-3xl sm:text-5xl lg:text-7xl font-black tracking-tight leading-none mb-3 sm:mb-6 text-gradient w-full">
+                        Раскрывая Силу <span class="text-white">Блокчейна</span>
+                    </h1>
+
+                    <!-- Подзаголовок -->
+                    <p class="text-xs sm:text-base lg:text-lg text-gray-400 mb-4 lg:mb-8 max-w-lg leading-relaxed">
+                        Трансформируем индустрии с помощью безопасных, децентрализованных и абсолютно прозрачных технологий нового поколения.
+                    </p>
+
+                    <!-- Машинописный текст -->
+                    <p class="text-[11px] sm:text-xs text-[var(--accent)] font-mono mb-4 lg:mb-8 h-5">
+                        <span id="vibe-typewriter"></span><span class="vibe-cursor">|</span>
+                    </p>
+
+                    <!-- Кнопки действия -->
+                    <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                        <div class="magnetic-wrap w-full sm:w-auto">
+                            <a href="#constructor" class="liquid-btn block px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest text-center text-black w-full">
+                                Начать работу
+                            </a>
+                        </div>
+                        <div class="magnetic-wrap w-full sm:w-auto">
+                            <a href="#why-blockchain" class="px-6 py-3 rounded-full border border-white/10 hover:border-[var(--accent)] hover:bg-white/5 transition-all text-xs font-bold uppercase tracking-widest text-gray-300 hover:text-white text-center flex items-center justify-center w-full">
+                                Узнать подробнее
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ЭКРАН 2: WHY BLOCKCHAIN? (Сетка из 4-х преимуществ) -->
+        <section id="why-blockchain" class="py-6 lg:py-12 flex flex-col items-center">
+            <div class="text-center mb-8 lg:mb-20 max-w-2xl">
+                <h2 class="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight mb-2 uppercase">
+                    Почему <span class="text-gradient">Блокчейн?</span>
+                </h2>
+                <p class="text-gray-400 text-[11px] sm:text-sm font-mono leading-relaxed">
+                    Блокчейн полностью переопределяет доверие в цифровом пространстве. Вот почему это важно:
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 w-full">
+                <!-- Карточка 1: Децентрализация -->
+                <div class="premium-card p-5 lg:p-6 flex flex-col gap-4 lg:gap-6">
+                    <div class="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-lg text-[var(--accent)] shadow-[0_0_15px_rgba(var(--accent-rgb),0.1)]">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94-3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base lg:text-lg font-bold text-white tracking-wide mb-1">Децентрализация</h3>
+                        <p class="text-gray-400 text-[10px] lg:text-xs leading-relaxed font-mono">
+                            Ни один субъект не контролирует систему целиком, распределяя доверие между узлами.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Карточка 2: Безопасность -->
+                <div class="premium-card p-5 lg:p-6 flex flex-col gap-4 lg:gap-6">
+                    <div class="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-lg text-[var(--accent)] shadow-[0_0_15px_rgba(var(--accent-rgb),0.1)]">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.599-3.747A11.96 11.96 0 0112 2.714z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base lg:text-lg font-bold text-white tracking-wide mb-1">Безопасность</h3>
+                        <p class="text-gray-400 text-[10px] lg:text-xs leading-relaxed font-mono">
+                            Зашифрованные и защищенные от несанкционированного доступа структуры данных.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Карточка 3: Прозрачность -->
+                <div class="premium-card p-5 lg:p-6 flex flex-col gap-4 lg:gap-6">
+                    <div class="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-lg text-[var(--accent)] shadow-[0_0_15px_rgba(var(--accent-rgb),0.1)]">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base lg:text-lg font-bold text-white tracking-wide mb-1">Прозрачность</h3>
+                        <p class="text-gray-400 text-[10px] lg:text-xs leading-relaxed font-mono">
+                            Публичные, подотчетные записи транзакций, видимые для всех участников.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Карточка 4: Эффективность -->
+                <div class="premium-card p-5 lg:p-6 flex flex-col gap-4 lg:gap-6">
+                    <div class="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-lg text-[var(--accent)] shadow-[0_0_15px_rgba(var(--accent-rgb),0.1)]">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base lg:text-lg font-bold text-white tracking-wide mb-1">Эффективность</h3>
+                        <p class="text-gray-400 text-[10px] lg:text-xs leading-relaxed font-mono">
+                            Быстрые, высокоэффективные и полностью автоматизированные вычислительные процессы.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ЭКРАН 3: WHY BLOCKCHAIN MATTERS (Бесконечно движущаяся цепь из референса) -->
+        <section class="py-6 lg:py-12 flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+            <div class="lg:w-1/2 flex flex-col gap-4 lg:gap-6 items-start w-full">
+                <h2 class="text-2xl sm:text-4xl lg:text-5xl font-black uppercase leading-tight">
+                    Блокчейн-Цепь <span class="text-gradient">Безопасности</span>
+                </h2>
+                <p class="text-gray-400 font-mono text-xs sm:text-sm leading-relaxed max-w-lg">
+                    Мы воссоздали концепт бесконечно бегущей 3D-цепи зашифрованных транзакционных узлов. Энергетические импульсы передают криптографические ключи в реальном времени, обеспечивая защиту корпоративного уровня.
+                </p>
+                <div class="magnetic-wrap w-full sm:w-auto">
+                    <button class="liquid-btn px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest text-black w-full">
+                        Подробнее о защите
+                    </button>
+                </div>
+            </div>
+
+            <!-- Детализированный изометрический SVG облачный сервер из референса -->
+            <div class="lg:w-1/2 w-full flex justify-center">
+                <svg class="w-full max-w-[380px] sm:max-w-[450px] neon-glow-filter" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="80" cy="60" r="1.5" fill="var(--accent)" opacity="0.6"/>
+                    <circle cx="340" cy="180" r="1" fill="#FFF" opacity="0.4"/>
+                    <circle cx="210" cy="50" r="2" fill="var(--accent)" opacity="0.8"/>
+                    
+                    <path d="M40 200 L360 100" stroke="rgba(255, 255, 255, 0.08)" stroke-width="12" stroke-linecap="round"/>
+                    <path id="laser-path" d="M40 200 L360 100" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-dasharray="15 80" stroke-dashoffset="0">
+                        <animate attributeName="stroke-dashoffset" values="400;0" dur="8s" repeatCount="indefinite" />
+                    </path>
+
+                    <!-- БЛОК 1 (Янтарный замок) -->
+                    <g transform="translate(60, 160)" class="hologram-float">
+                        <polygon points="30,0 60,15 30,30 0,15" fill="rgba(var(--accent-rgb), 0.15)" stroke="var(--accent)" stroke-width="1.5"/>
+                        <polygon points="0,15 30,30 30,65 0,50" fill="rgba(var(--accent-rgb), 0.08)" stroke="var(--accent)" stroke-width="1.5"/>
+                        <polygon points="30,30 60,15 60,50 30,65" fill="rgba(var(--accent-rgb), 0.25)" stroke="var(--accent)" stroke-width="1.5"/>
+                        <g transform="translate(22, -24)" class="lock-bounce">
+                            <rect x="2" y="10" width="12" height="10" rx="1" fill="#FFA500" stroke="#FFD700" stroke-width="1" filter="drop-shadow(0 0 4px #FFA500)"/>
+                            <path d="M4 10 V6 A 4 4 0 0 1 12 6 V10" stroke="#FFD700" stroke-width="1.5" fill="none"/>
+                        </g>
+                    </g>
+
+                    <!-- БЛОК 2 (Акцентный замок) -->
+                    <g transform="translate(170, 120)" class="hologram-float" style="animation-delay: -2s;">
+                        <polygon points="30,0 60,15 30,30 0,15" fill="rgba(var(--accent-rgb), 0.25)" stroke="var(--accent)" stroke-width="2"/>
+                        <polygon points="0,15 30,30 30,65 0,50" fill="rgba(var(--accent-rgb), 0.1)" stroke="var(--accent)" stroke-width="2"/>
+                        <polygon points="30,30 60,15 60,50 30,65" fill="rgba(var(--accent-rgb), 0.35)" stroke="var(--accent)" stroke-width="2"/>
+                        <g transform="translate(22, -24)">
+                            <rect x="2" y="10" width="12" height="10" rx="1" fill="var(--accent)" stroke="#FFF" stroke-width="1" filter="drop-shadow(0 0 4px var(--accent))"/>
+                            <path d="M4 10 V6 A 4 4 0 0 1 12 6 V10" stroke="#FFF" stroke-width="1.5" fill="none"/>
+                        </g>
+                    </g>
+
+                    <!-- БЛОК 3 (Янтарный замок) -->
+                    <g transform="translate(280, 80)" class="hologram-float" style="animation-delay: -4s;">
+                        <polygon points="30,0 60,15 30,30 0,15" fill="rgba(var(--accent-rgb), 0.15)" stroke="var(--accent)" stroke-width="1.5"/>
+                        <polygon points="0,15 30,30 30,65 0,50" fill="rgba(var(--accent-rgb), 0.08)" stroke="var(--accent)" stroke-width="1.5"/>
+                        <polygon points="30,30 60,15 60,50 30,65" fill="rgba(var(--accent-rgb), 0.25)" stroke="var(--accent)" stroke-width="1.5"/>
+                        <g transform="translate(22, -24)">
+                            <rect x="2" y="10" width="12" height="10" rx="1" fill="#FFA500" stroke="#FFD700" stroke-width="1" filter="drop-shadow(0 0 4px #FFA500)"/>
+                            <path d="M4 10 V6 A 4 4 0 0 1 12 6 V10" stroke="#FFD700" stroke-width="1.5" fill="none"/>
+                        </g>
+                    </g>
+                </svg>
+            </div>
+        </section>
+
+        <!-- ЭКРАН 4: PRICING PLANS (Секция цен) -->
+        <section id="pricing" class="py-6 lg:py-12 flex flex-col items-center">
+            <div class="text-center mb-10 lg:mb-20 max-w-2xl">
+                <h2 class="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight mb-3 uppercase">
+                    Тарифные <span class="text-gradient">Планы</span>
+                </h2>
+                <p class="text-gray-400 text-xs sm:text-sm font-mono leading-relaxed">
+                    Выберите идеальный план для вашего масштаба и начните использовать мощь ИИ-блокчейна прямо сейчас.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 w-full max-w-5xl items-stretch">
+                <!-- Тариф 1: Начальный -->
+                <div class="premium-card p-6 lg:p-8 flex flex-col justify-between">
+                    <div>
+                        <span class="text-[10px] font-bold tracking-widest text-gray-500 font-mono uppercase block mb-1">Начальный План</span>
+                        <div class="flex items-baseline gap-2 mb-4">
+                            <span class="text-3xl lg:text-4xl font-black">$199</span>
+                            <span class="text-xs text-gray-500 font-mono">/месяц</span>
+                        </div>
+                        <p class="text-xs text-gray-400 font-mono mb-6">Для частных лиц и новичков в сфере блокчейн-разработки.</p>
+                        
+                        <div class="border-t border-white/5 pt-4 space-y-3">
+                            <span class="text-[10px] font-bold tracking-widest text-gray-500 font-mono uppercase block">Возможности:</span>
+                            <ul class="space-y-2.5 text-xs font-mono text-gray-300">
+                                <li class="flex items-center gap-3">
+                                    <span class="text-[var(--accent)] text-sm">✓</span> Доступ к базовым ИИ-руководствам
+                                </li>
+                                <li class="flex items-center gap-3">
+                                    <span class="text-[var(--accent)] text-sm">✓</span> Email-поддержка 24/7
+                                </li>
+                                <li class="flex items-center gap-3 opacity-40">
+                                    <span class="text-gray-600 text-sm">✗</span> Продвинутые интеграции узлов
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <button class="w-full mt-6 py-2.5 rounded-xl border border-white/10 hover:border-[var(--accent)] hover:bg-white/5 transition-all text-[10px] font-bold tracking-wider uppercase text-gray-400 hover:text-white">
+                        Выбрать Начальный
+                    </button>
+                </div>
+
+                <!-- Тариф 2: Продвинутый (Laser Glow Border) -->
+                <div class="laser-glow-card p-6 lg:p-8 flex flex-col justify-between border border-transparent shadow-[0_0_30px_rgba(var(--accent-rgb),0.15)] relative overflow-hidden">
+                    <div class="absolute top-4 right-[-36px] bg-gradient-to-r from-[var(--accent)] to-[#7C3AED] text-black text-[9px] font-black font-mono py-1 px-10 rotate-45 uppercase tracking-widest">
+                        Популярный
+                    </div>
+                    
+                    <div>
+                        <span class="text-[10px] font-bold tracking-widest text-[var(--accent)] font-mono uppercase block mb-1">Оптимальный План</span>
+                        <div class="flex items-baseline gap-2 mb-4">
+                            <span class="text-3xl lg:text-4xl font-black text-gradient">$349</span>
+                            <span class="text-xs text-gray-400 font-mono">/месяц</span>
+                        </div>
+                        <p class="text-xs text-gray-400 font-mono mb-6">Для уверенных пользователей и небольших дизайн-команд.</p>
+                        
+                        <div class="border-t border-white/5 pt-4 space-y-3">
+                            <span class="text-[10px] font-bold tracking-widest text-gray-500 font-mono uppercase block">Возможности:</span>
+                            <ul class="space-y-2.5 text-xs font-mono text-gray-300">
+                                <li class="flex items-center gap-3">
+                                    <span class="text-[var(--accent)] text-sm">✓</span> Всё из начального пакета
+                                </li>
+                                <li class="flex items-center gap-3">
+                                    <span class="text-[var(--accent)] text-sm">✓</span> Доступ к продвинутым ИИ-моделям
+                                </li>
+                                <li class="flex items-center gap-3">
+                                    <span class="text-[var(--accent)] text-sm">✓</span> Приоритетный Discord-чат
+                                </li>
+                                <li class="flex items-center gap-3">
+                                    <span class="text-[var(--accent)] text-sm">✓</span> Базовое тестирование контрактов
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="magnetic-wrap w-full mt-6">
+                        <button class="w-full py-2.5 rounded-xl liquid-btn text-[10px] font-bold tracking-wider uppercase text-black">
+                            Выбрать Оптимальный
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Тариф 3: Безлимитный -->
+                <div class="premium-card p-6 lg:p-8 flex flex-col justify-between">
+                    <div>
+                        <span class="text-[10px] font-bold tracking-widest text-gray-500 font-mono uppercase block mb-1">Профессиональный План</span>
+                        <div class="flex items-baseline gap-2 mb-4">
+                            <span class="text-3xl lg:text-4xl font-black">$495</span>
+                            <span class="text-xs text-gray-500 font-mono">/месяц</span>
+                        </div>
+                        <p class="text-xs text-gray-400 font-mono mb-6">Для масштабных ИИ-агентств и технологических компаний.</p>
+                        
+                        <div class="border-t border-white/5 pt-4 space-y-3">
+                            <span class="text-[10px] font-bold tracking-widest text-gray-500 font-mono uppercase block">Возможности:</span>
+                            <ul class="space-y-2.5 text-xs font-mono text-gray-300">
+                                <li class="flex items-center gap-3">
+                                    <span class="text-[var(--accent)] text-sm">✓</span> Всё из оптимального пакета
+                                </li>
+                                <li class="flex items-center gap-3">
+                                    <span class="text-[var(--accent)] text-sm">✓</span> Полные API интеграции без лимитов
+                                </li>
+                                <li class="flex items-center gap-3">
+                                    <span class="text-[var(--accent)] text-sm">✓</span> Персональный ИИ-инженер
+                                </li>
+                                <li class="flex items-center gap-3">
+                                    <span class="text-[var(--accent)] text-sm">✓</span> Infinite Sandbox среды разработки
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <button class="w-full mt-6 py-2.5 rounded-xl border border-white/10 hover:border-[var(--accent)] hover:bg-white/5 transition-all text-[10px] font-bold tracking-wider uppercase text-gray-400 hover:text-white">
+                        Выбрать Профессиональный
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ЭКРАН 5: ЖИВАЯ ИИ-СИМУЛЯЦИЯ (Интерактивный Терминал) -->
+        <section id="live" class="py-6 lg:py-12 flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+            <div class="lg:w-1/2 flex flex-col gap-4 lg:gap-6 w-full">
+                <h2 class="text-2xl sm:text-4xl lg:text-5xl font-black uppercase leading-tight">
+                    Живой <span class="text-gradient">ИИ-Синтез</span> Элементов
+                </h2>
+                <p class="text-gray-400 font-mono text-xs sm:text-sm leading-relaxed">
+                    Справа вы видите симулятор реального времени. Наша виртуальная нейросеть обрабатывает промпт по генерации UI-компонента, автоматически пишет CSS и моментально рендерит готовую интерактивную кнопку на холсте.
+                </p>
+                <div class="flex items-center gap-4 text-xs font-bold text-gray-500 font-mono">
+                    <span>СКОРОСТЬ_СИНТЕЗА: ~120ms</span>
+                    <span>•</span>
+                    <span>ТОЧНОСТЬ: 99.8%</span>
+                </div>
+            </div>
+
+            <!-- Терминал -->
+            <div class="lg:w-1/2 w-full">
+                <div class="terminal-glow rounded-2xl overflow-hidden flex flex-col laser-glow-card" style="animation-duration: 6s; z-index: 1;">
+                    <div class="flex justify-between items-center px-6 py-4 border-b border-white/5 bg-black/40 z-10 relative">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-[#ff5f56]"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-[#27c93f]"></span>
+                        </div>
+                        <span class="text-[10px] font-mono text-gray-500 tracking-widest">AI_GENERATOR_CORE.JS</span>
+                    </div>
+                    <div class="p-6 md:p-8 flex flex-col gap-6 min-h-[280px] justify-between z-10 relative">
+                        <div id="terminal-logs" class="font-mono text-xs md:text-sm text-emerald-400 flex flex-col gap-2">
+                            <!-- Заполняется JS -->
+                        </div>
+                        <div class="flex items-center justify-center py-6 border-t border-white/5">
+                            <div id="terminal-render-zone" class="w-full flex justify-center opacity-0 transition-opacity duration-500">
+                                <!-- Отрисуется кнопка -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ЭКРАН 6: ИНТЕРАКТИВНЫЙ ПРОМПТ-КОНСТРУКТОР -->
+        <section id="constructor" class="py-6 lg:py-12 flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+            <div class="lg:w-5/12 flex flex-col gap-6 lg:gap-8 w-full">
+                <h2 class="text-2xl sm:text-4xl lg:text-5xl font-black uppercase leading-tight">
+                    Собери Промпт <br><span class="text-gradient">Своего Проекта</span>
+                </h2>
+                <p class="text-gray-400 font-mono text-xs sm:text-sm leading-relaxed">
+                    Выбери нужные параметры, введи контакты, и наш генератор сформирует ТЗ для моментального запуска ИИ-синтеза.
+                </p>
+                <div class="flex items-center gap-2 text-xs font-mono text-gray-500">
+                    <span class="w-2 h-2 rounded-full bg-[var(--accent)] animate-ping"></span>
+                    <span>Готов к прямой интеграции с конвейером ИИ</span>
+                </div>
+            </div>
+
+            <!-- Форма Конструктора -->
+            <div class="lg:w-7/12 w-full">
+                <div class="premium-card p-6 lg:p-12 flex flex-col gap-6 lg:gap-8">
+                    <!-- Шаг 1 -->
+                    <div class="flex flex-col gap-3">
+                        <span class="text-[10px] font-bold tracking-widest text-gray-500 font-mono uppercase">01 // Направление проекта</span>
+                        <div class="flex flex-wrap gap-2.5" id="project-type-tags">
+                            <button class="interactive-tag active px-4 py-2.5 rounded-xl text-[11px] font-bold tracking-wider uppercase" data-value="Landing Page" data-en="landing page structure">Landing Page</button>
+                            <button class="interactive-tag px-4 py-2.5 rounded-xl text-[11px] font-bold tracking-wider uppercase" data-value="Web3 Application" data-en="Web3 decentralized application">Web3 App</button>
+                            <button class="interactive-tag px-4 py-2.5 rounded-xl text-[11px] font-bold tracking-wider uppercase" data-value="AI Telegram Bot" data-en="neural-connected Telegram assistant">Telegram Bot</button>
+                        </div>
+                    </div>
+
+                    <!-- Шаг 2 -->
+                    <div class="flex flex-col gap-3">
+                        <span class="text-[10px] font-bold tracking-widest text-gray-500 font-mono uppercase">02 // Время исполнения</span>
+                        <div class="flex flex-wrap gap-2.5" id="deadline-tags">
+                            <button class="interactive-tag active px-4 py-2.5 rounded-xl text-[11px] font-bold tracking-wider uppercase" data-value="Срочно (вчера)" data-en="with extreme high priority">Срочно 🔥</button>
+                            <button class="interactive-tag px-4 py-2.5 rounded-xl text-[11px] font-bold tracking-wider uppercase" data-value="Сбалансированно" data-en="within standard production times">В норме</button>
+                            <button class="interactive-tag px-4 py-2.5 rounded-xl text-[11px] font-bold tracking-wider uppercase" data-value="Размеренно" data-en="with deep architectural audit">Размеренно</button>
+                        </div>
+                    </div>
+
+                    <!-- Шаг 3: Динамический Визуализатор Промпта -->
+                    <div class="flex flex-col gap-3">
+                        <span class="text-[10px] font-bold tracking-widest text-gray-500 font-mono uppercase">Итоговая ИИ-Инструкция (Промпт)</span>
+                        <div id="live-prompt-visualizer" class="w-full rounded-xl p-4 font-mono text-[10px] sm:text-[11px] text-[var(--accent)] leading-relaxed flex items-center">
+                            <!-- Заполняется JS -->
+                        </div>
+                    </div>
+
+                    <!-- Шаг 4 -->
+                    <div class="flex flex-col gap-3">
+                        <label for="contact-field" class="text-[10px] font-bold tracking-widest text-gray-500 font-mono uppercase">04 // Контакт связи (Telegram / Email)</label>
+                        <input type="text" id="contact-field" class="w-full bg-white/5 border-b-2 border-white/10 hover:border-white/30 focus:border-[var(--accent)] outline-none py-3 px-2 text-white font-mono text-sm transition-all" placeholder="Например: @username">
+                    </div>
+
+                    <div class="magnetic-wrap w-full mt-2">
+                        <button id="constructor-submit" class="liquid-btn py-4 rounded-xl text-xs font-bold uppercase tracking-widest w-full text-black">
+                            Запустить ИИ-Синтез
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ПОДВАЛ -->
+        <footer class="border-t border-white/5 py-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500 font-mono">
+            <span>© 2026 JumpBot Platform. Сгенерировано со скоростью мысли.</span>
+            <div class="flex gap-8">
+                <a href="#hero" class="hover:text-white transition-colors">НАВЕРХ</a>
+                <a href="https://t.me/RidFinance_bot" target="_blank" class="hover:text-[var(--accent)] text-[var(--accent)] font-bold tracking-wider">ZAPUSK</a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Премиальная модалка обратной связи -->
+    <div id="vibe-modal" class="modal-blur fixed inset-0 flex items-center justify-center p-6 opacity-0 pointer-events-none z-[2000]">
+        <div class="premium-card p-6 sm:p-12 w-full max-w-md flex flex-col items-center text-center gap-6">
+            <div class="w-14 h-14 rounded-full border border-[var(--accent)] flex items-center justify-center text-2xl text-[var(--accent)] shadow-[0_0_20px_rgba(var(--accent-rgb),0.3)]">
+                ✓
+            </div>
+            <h3 class="text-xl sm:text-2xl font-black uppercase tracking-tight">Синтез Инициирован</h3>
+            <div id="modal-details" class="font-mono text-xs text-gray-400 space-y-2 leading-relaxed">
+                <!-- Детали промпта -->
+            </div>
+            <button id="modal-close" class="liquid-btn px-6 py-3 rounded-lg text-xs font-bold uppercase tracking-wider w-full mt-4 text-black">
+                Закрыть соединение
+            </button>
+        </div>
+    </div>
+
+    <!-- ЛОГИКА И ЭФФЕКТЫ -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const body = document.body;
+
+            // --- WEB AUDIO API SCI-FI SOUNDS ---
+            let soundEnabled = false;
+            let audioCtx = null;
+
+            const soundToggleBtn = document.getElementById('sound-toggle-btn');
+            const soundIcon = document.getElementById('sound-icon');
+
+            function initAudio() {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            function playClickSound() {
+                if (!soundEnabled) return;
+                initAudio();
+                if(audioCtx.state === 'suspended') audioCtx.resume();
+                
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.08);
+                
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.08);
+            }
+
+            function playPulseSound() {
+                if (!soundEnabled) return;
+                initAudio();
+                if(audioCtx.state === 'suspended') audioCtx.resume();
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(40, audioCtx.currentTime + 0.4);
+                
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.4);
+            }
+
+            soundToggleBtn.addEventListener('click', () => {
+                soundEnabled = !soundEnabled;
+                if (soundEnabled) {
+                    initAudio();
+                    soundIcon.innerText = '🔊';
+                    soundToggleBtn.querySelector('span:not(#sound-icon)').innerText = 'ЗВУК_ВКЛ';
+                    playPulseSound();
+                } else {
+                    soundIcon.innerText = '🔈';
+                    soundToggleBtn.querySelector('span:not(#sound-icon)').innerText = 'ЗВУК_ВЫКЛ';
+                }
+            });
+
+
+            // --- HTML5 CANVAS FON ---
+            const canvas = document.getElementById('neural-canvas');
+            const ctx = canvas.getContext('2d');
+            let points = [];
+            const maxPoints = 40; 
+            const connectionDistance = 140;
+            let mouseX = 0;
+            let mouseY = 0;
+
+            function initCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                points = [];
+                for (let i = 0; i < maxPoints; i++) {
+                    points.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        vx: (Math.random() - 0.5) * 0.5,
+                        vy: (Math.random() - 0.5) * 0.5,
+                        radius: Math.random() * 2 + 1
+                    });
+                }
+            }
+
+            window.addEventListener('resize', initCanvas);
+            initCanvas();
+
+            window.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            });
+
+            function drawNeuralNetwork() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                const accentColor = getComputedStyle(body).getPropertyValue('--accent').trim();
+                const accentRgb = accentColor === "#FF007F" ? "255, 0, 127" : (accentColor === "#00FF66" ? "0, 255, 102" : "0, 229, 255");
+
+                points.forEach(p => {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(${accentRgb}, 0.4)`;
+                    ctx.fill();
+
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                    if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+                    points.forEach(other => {
+                        const dist = Math.hypot(p.x - other.x, p.y - other.y);
+                        if (dist < connectionDistance) {
+                            ctx.beginPath();
+                            ctx.moveTo(p.x, p.y);
+                            ctx.lineTo(other.x, other.y);
+                            ctx.strokeStyle = `rgba(${accentRgb}, ${0.1 * (1 - dist / connectionDistance)})`;
+                            ctx.lineWidth = 0.7;
+                            ctx.stroke();
+                        }
+                    });
+
+                    const mouseDist = Math.hypot(p.x - mouseX, p.y - mouseY);
+                    if (mouseDist < 180) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(mouseX, mouseY);
+                        ctx.strokeStyle = `rgba(${accentRgb}, ${0.15 * (1 - mouseDist / 180)})`;
+                        ctx.lineWidth = 0.8;
+                        ctx.stroke();
+                    }
+                });
+
+                requestAnimationFrame(drawNeuralNetwork);
+            }
+            drawNeuralNetwork();
+
+
+            // --- СЛЕДЯЩИЙ СВЕТ ---
+            const glow = document.getElementById('vibe-cursor-glow');
+            window.addEventListener('mousemove', (e) => {
+                glow.style.left = `${e.clientX}px`;
+                glow.style.top = `${e.clientY}px`;
+            });
+
+
+            // --- ВАЙБ СВИТЧЕР ---
+            const switchBtns = document.querySelectorAll('.vibe-switch-btn');
+            switchBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    playPulseSound();
+                    switchBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    const vibe = btn.getAttribute('data-vibe');
+                    body.className = "relative min-h-screen text-white"; 
+                    if (vibe !== "vibe-cyan") {
+                        body.classList.add(vibe);
+                    }
+                });
+            });
+
+
+            // --- МАГНИТНЫЕ КНОПКИ ---
+            const magneticElements = document.querySelectorAll('.magnetic-wrap');
+            magneticElements.forEach(wrap => {
+                wrap.addEventListener('mousemove', (e) => {
+                    const rect = wrap.getBoundingClientRect();
+                    const x = e.clientX - rect.left - rect.width / 2;
+                    const y = e.clientY - rect.top - rect.height / 2;
+                    
+                    wrap.style.transform = `translate(${x * 0.35}px, ${y * 0.35}px)`;
+                });
+                
+                wrap.addEventListener('mouseleave', () => {
+                    wrap.style.transform = 'translate(0px, 0px)';
+                });
+            });
+
+
+            // --- ЭФФЕКТ ПЕЧАТНОЙ МАШИНКИ ---
+            const textStr = "Синтезирую промпты в чистый код. Создаю премиальные интерфейсы со скоростью мысли.";
+            const typewriterElement = document.getElementById('vibe-typewriter');
+            let textIdx = 0;
+            
+            function typeWriter() {
+                if (textIdx < textStr.length) {
+                    typewriterElement.innerHTML += textStr.charAt(textIdx);
+                    textIdx++;
+                    setTimeout(typeWriter, 40);
+                }
+            }
+            typeWriter();
+
+
+            // --- БЕГУЩИЙ СЧЕТЧИК ---
+            const counterEl = document.getElementById('vibe-counter');
+            setInterval(() => {
+                let count = parseInt(counterEl.innerText);
+                counterEl.innerText = count + Math.floor(Math.random() * 4) + 1;
+            }, 2500);
+
+
+            // --- TILT НА КАРТОЧКАХ ---
+            const cards = document.querySelectorAll('.premium-card, .laser-glow-card');
+            cards.forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left - rect.width/2;
+                    const y = e.clientY - rect.top - rect.height/2;
+                    
+                    card.style.transform = `perspective(1000px) rotateX(${-y / 15}deg) rotateY(${x / 15}deg) translateY(-8px)`;
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0)';
+                });
+            });
+
+
+            // --- RETINA 3D-СФЕРА ИЗ ЦИФР ---
+            const sphereCanvas = document.getElementById('sphere-canvas');
+            const sCtx = sphereCanvas.getContext('2d');
+            let sphereDigits = [];
+            const numDigits = 160;
+            const sphereRadius = 130; // Слегка уменьшен для плотности и аккуратности
+            
+            let rotationX = 0.005;
+            let rotationY = 0.01;
+            let targetRotationX = 0.005;
+            let targetRotationY = 0.01;
+            let isDragging = false;
+            let prevMouseX = 0;
+            let prevMouseY = 0;
+
+            function resizeSphereCanvas() {
+                const dpr = window.devicePixelRatio || 1;
+                const rect = sphereCanvas.parentElement.getBoundingClientRect();
+                
+                sphereCanvas.width = rect.width * dpr;
+                sphereCanvas.height = rect.height * dpr;
+                
+                sphereCanvas.style.width = `${rect.width}px`;
+                sphereCanvas.style.height = `${rect.height}px`;
+                
+                sCtx.scale(dpr, dpr);
+            }
+            window.addEventListener('resize', resizeSphereCanvas);
+            resizeSphereCanvas();
+
+            function initSphere() {
+                sphereDigits = [];
+                for (let i = 0; i < numDigits; i++) {
+                    const phi = Math.acos(-1 + (2 * i) / numDigits);
+                    const theta = Math.sqrt(numDigits * Math.PI) * phi;
+                    
+                    sphereDigits.push({
+                        digit: Math.floor(Math.random() * 10).toString(),
+                        x3d: sphereRadius * Math.sin(phi) * Math.cos(theta),
+                        y3d: sphereRadius * Math.sin(phi) * Math.sin(theta),
+                        z3d: sphereRadius * Math.cos(phi)
+                    });
+                }
+            }
+            initSphere();
+
+            // Интерактивное перетаскивание сферы
+            sphereCanvas.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                prevMouseX = e.clientX;
+                prevMouseY = e.clientY;
+            });
+
+            window.addEventListener('mouseup', () => { isDragging = false; });
+            window.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    const deltaX = e.clientX - prevMouseX;
+                    const deltaY = e.clientY - prevMouseY;
+                    targetRotationY = deltaX * 0.005;
+                    targetRotationX = -deltaY * 0.005;
+                    prevMouseX = e.clientX;
+                    prevMouseY = e.clientY;
+                }
+            });
+
+            // Touch на мобильных девайсах
+            sphereCanvas.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                prevMouseX = e.touches[0].clientX;
+                prevMouseY = e.touches[0].clientY;
+            });
+            window.addEventListener('touchend', () => { isDragging = false; });
+            window.addEventListener('touchmove', (e) => {
+                if (isDragging && e.touches.length > 0) {
+                    const deltaX = e.touches[0].clientX - prevMouseX;
+                    const deltaY = e.touches[0].clientY - prevMouseY;
+                    targetRotationY = deltaX * 0.005;
+                    targetRotationX = -deltaY * 0.005;
+                    prevMouseX = e.touches[0].clientX;
+                    prevMouseY = e.touches[0].clientY;
+                }
+            });
+
+            function renderSphere() {
+                const logicalWidth = sphereCanvas.width / (window.devicePixelRatio || 1);
+                const logicalHeight = sphereCanvas.height / (window.devicePixelRatio || 1);
+                sCtx.clearRect(0, 0, logicalWidth, logicalHeight);
+                
+                const cx = logicalWidth / 2;
+                const cy = logicalHeight / 2;
+
+                if (!isDragging) {
+                    targetRotationX += (0.003 - targetRotationX) * 0.05;
+                    targetRotationY += (0.006 - targetRotationY) * 0.05;
+                }
+                
+                rotationX = targetRotationX;
+                rotationY = targetRotationY;
+
+                const cosX = Math.cos(rotationX);
+                const sinX = Math.sin(rotationX);
+                const cosY = Math.cos(rotationY);
+                const sinY = Math.sin(rotationY);
+
+                const accentColor = getComputedStyle(body).getPropertyValue('--accent').trim();
+                const accentRgb = accentColor === "#FF007F" ? "255, 0, 127" : (accentColor === "#00FF66" ? "0, 255, 102" : "0, 229, 255");
+
+                sphereDigits.sort((a, b) => b.z3d - a.z3d);
+
+                sphereDigits.forEach(d => {
+                    let x1 = d.x3d * cosY - d.z3d * sinY;
+                    let z1 = d.z3d * cosY + d.x3d * sinY;
+                    let y2 = d.y3d * cosX - z1 * sinX;
+                    let z2 = z1 * cosX + d.y3d * sinX;
+
+                    d.x3d = x1;
+                    d.y3d = y2;
+                    d.z3d = z2;
+
+                    const depthFactor = 300; 
+                    const scale = depthFactor / (depthFactor + z2);
+                    const projX = x1 * scale + cx;
+                    const projY = y2 * scale + cy;
+
+                    const fontSize = Math.max(8, Math.min(28, 14 * scale)); // Небольшое сжатие размера шрифта для баланса
+                    const opacity = Math.max(0.12, Math.min(1, scale - 0.3));
+
+                    sCtx.font = `bold ${fontSize}px 'JetBrains Mono', monospace`;
+                    sCtx.fillStyle = `rgba(${accentRgb}, ${opacity})`;
+                    sCtx.shadowColor = `rgba(${accentRgb}, ${opacity * 0.5})`;
+                    sCtx.shadowBlur = z2 < 0 ? 8 : 1; 
+                    sCtx.textAlign = 'center';
+                    sCtx.textBaseline = 'middle';
+                    
+                    sCtx.fillText(d.digit, projX, projY);
+                });
+
+                requestAnimationFrame(renderSphere);
+            }
+            renderSphere();
+
+
+            // --- СИМУЛЯЦИЯ ИИ-ТЕРМИНАЛА ---
+            const logsContainer = document.getElementById('terminal-logs');
+            const renderZone = document.getElementById('terminal-render-zone');
+            const logsData = [
+                { log: ">> [СИСТЕМА]: Подключение к ИИ-ядру модели...", delay: 500 },
+                { log: ">> [МОДЕЛЬ]: Анализ промпт-матрицы пользователя...", delay: 800 },
+                { log: ">> [КОМПИЛЯТОР]: Внедрение CSS-переменных и размытия...", delay: 1000 },
+                { log: ">> [УСПЕХ]: Компиляция завершена. Отрисовка премиум-кнопки...", delay: 600 }
+            ];
+            let currentLogIdx = 0;
+
+            function runTerminalCycle() {
+                renderZone.style.opacity = '0';
+                logsContainer.innerHTML = '';
+                currentLogIdx = 0;
+
+                function renderNextLog() {
+                    if (currentLogIdx < logsData.length) {
+                        const item = logsData[currentLogIdx];
+                        logsContainer.innerHTML += `<div class="font-mono text-xs opacity-90">${item.log}</div>`;
+                        currentLogIdx++;
+                        
+                        if (soundEnabled && currentLogIdx % 2 === 0) playClickSound();
+
+                        setTimeout(renderNextLog, item.delay);
+                    } else {
+                        renderZone.innerHTML = `
+                            <button class="liquid-btn px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider text-black">
+                                ИИ_КОМПОНЕНТ_v2.5
+                            </button>
+                        `;
+                        renderZone.style.opacity = '1';
+                        if (soundEnabled) playPulseSound();
+                        setTimeout(runTerminalCycle, 6000); 
+                    }
+                }
+                renderNextLog();
+            }
+            runTerminalCycle();
+
+
+            // --- ДИНАМИЧЕСКИЙ ВИЗУАЛИЗАТОР ПРОМПТОВ ---
+            const livePromptVisualizer = document.getElementById('live-prompt-visualizer');
+
+            function updateLivePrompt() {
+                const activeType = document.querySelector('#project-type-tags .interactive-tag.active');
+                const activeDeadline = document.querySelector('#deadline-tags .interactive-tag.active');
+                
+                const typeText = activeType ? activeType.getAttribute('data-en') : 'custom system';
+                const deadlineText = activeDeadline ? activeDeadline.getAttribute('data-en') : 'high-priority';
+                
+                const generatedPrompt = `/system initialize: [${typeText}] --parameters [vibe: reactive, aesthetics: cyberpunk, scheduling: ${deadlineText}] --output format: [executable html_bundle]`;
+                
+                livePromptVisualizer.innerHTML = `&gt; ${generatedPrompt}`;
+            }
+
+            const setupTagGroup = (containerId) => {
+                const container = document.getElementById(containerId);
+                const tags = container.querySelectorAll('.interactive-tag');
+                tags.forEach(tag => {
+                    tag.addEventListener('click', () => {
+                        playClickSound();
+                        tags.forEach(t => t.classList.remove('active'));
+                        tag.classList.add('active');
+                        updateLivePrompt();
+                    });
+                });
+            };
+
+            setupTagGroup('project-type-tags');
+            setupTagGroup('deadline-tags');
+            updateLivePrompt(); 
+
+
+            // --- МОДАЛЬНОЕ ОКНО ---
+            const modal = document.getElementById('vibe-modal');
+            const modalDetails = document.getElementById('modal-details');
+            const modalClose = document.getElementById('modal-close');
+
+            document.getElementById('constructor-submit').addEventListener('click', () => {
+                const activeType = document.querySelector('#project-type-tags .interactive-tag.active').getAttribute('data-value');
+                const activeDeadline = document.querySelector('#deadline-tags .interactive-tag.active').getAttribute('data-value');
+                const contactValue = document.getElementById('contact-field').value.trim();
+
+                if (!contactValue) {
+                    playPulseSound();
+                    modalDetails.innerHTML = `<span class="text-rose-500 font-bold uppercase tracking-wider">Ошибка // Введите ваши контакты</span>`;
+                    modal.style.opacity = '1';
+                    modal.style.pointerEvents = 'auto';
+                    return;
+                }
+
+                playPulseSound();
+                modalDetails.innerHTML = `
+                    <div class="text-white font-bold mb-1 text-sm uppercase">ФОРМАТ: ${activeType}</div>
+                    <div class="text-gray-300 text-xs">СРОКИ: ${activeDeadline}</div>
+                    <div class="text-[var(--accent)] font-mono text-xs mt-4">БУДЕТ ОТПРАВЛЕНО НА: ${contactValue}</div>
+                `;
+                modal.style.opacity = '1';
+                modal.style.pointerEvents = 'auto';
+            });
+
+            modalClose.addEventListener('click', () => {
+                playClickSound();
+                modal.style.opacity = '0';
+                modal.style.pointerEvents = 'none';
+            });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    playClickSound();
+                    modal.style.opacity = '0';
+                    modal.style.pointerEvents = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
